@@ -954,6 +954,42 @@
     color: var(--accent);
     border-bottom-color: var(--accent);
   }
+
+  /* PREMIUM */
+  .premium-active { opacity: 0.85; border-color: gold !important; color: gold !important; }
+  #premium-modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 9999;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .premium-card {
+    background: var(--card, #14141f);
+    border: 1px solid gold;
+    border-radius: 16px;
+    max-width: 380px; width: 100%;
+    padding: 28px 24px;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    color: var(--text, #fff);
+  }
+  .premium-card h2 { color: gold; margin: 0 0 6px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 30px; }
+  .premium-price { font-size: 26px; color: gold; margin: 14px 0 4px; }
+  .premium-benefits { text-align: left; margin: 16px auto; font-size: 13px; line-height: 2; }
+  .premium-buy-btn {
+    width: 100%; padding: 14px; margin-top: 10px;
+    background: gold; color: #000; border: none; border-radius: 10px;
+    font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px;
+    cursor: pointer;
+  }
+  .premium-close-btn {
+    width: 100%; padding: 10px; margin-top: 10px;
+    background: transparent; color: var(--text-dim, #888);
+    border: 1px solid var(--border, #333); border-radius: 10px;
+    font-family: 'Space Mono', monospace; cursor: pointer; font-size: 13px;
+  }
 </style>
 
 <!-- Firebase SDK (Compat) -->
@@ -962,6 +998,8 @@
 
 <!-- i18n & Firebase Config -->
 <script src="firebase-config.js"></script>
+<!-- Ads + Premium -->
+<script src="ads-premium.js"></script>
 
 </head>
 <body>
@@ -1009,6 +1047,26 @@
     <button class="menu-btn" onclick="showScreen('screen-stats')">📊 &nbsp;<span id="menu-stats">Mis estadísticas</span></button>
     <button class="menu-btn" onclick="showScreen('screen-themes')">🎨 &nbsp;<span id="menu-themes">Temas</span></button>
     <button class="menu-btn" onclick="showScreen('screen-howto')">? &nbsp;<span id="menu-howto">Cómo jugar</span></button>
+    <button class="menu-btn" id="menu-premium-btn" onclick="openPremiumModal()" style="border-color: gold; color: gold;">⭐ &nbsp;<span>Premium — Sacá los anuncios</span></button>
+  </div>
+
+  <!-- PREMIUM MODAL -->
+  <div id="premium-modal">
+    <div class="premium-card">
+      <h2>⭐ PREMIUM</h2>
+      <div style="font-size:13px; color:var(--text-dim);">Cálculo Flash sin límites</div>
+      <div class="premium-price">$0.99/mes</div>
+      <div class="premium-benefits">
+        🚫 Sin anuncios<br>
+        🎨 5 skins exclusivas<br>
+        🌈 Temas premium<br>
+        🏅 Insignia dorada en el ranking<br>
+        💪 Apoyás el desarrollo del juego
+      </div>
+      <button class="premium-buy-btn" onclick="buyPremium()">SUSCRIBIRME</button>
+      <button class="premium-close-btn" onclick="restorePurchases()">Restaurar compras</button>
+      <button class="premium-close-btn" onclick="closePremiumModal()">Ahora no</button>
+    </div>
   </div>
 
   <!-- DIFFICULTY -->
@@ -1840,12 +1898,14 @@ function validateName() {
 function saveAndReplay() {
   const name = document.getElementById('name-input').value.trim();
   if (name) saveScore(name);
+  if (typeof maybeShowInterstitial === 'function') maybeShowInterstitial();
   startGame(gameState.difficulty);
 }
 
 function saveAndHome() {
   const name = document.getElementById('name-input').value.trim();
   if (name) saveScore(name);
+  if (typeof maybeShowInterstitial === 'function') maybeShowInterstitial();
   showScreen('screen-home');
 }
 
@@ -2107,6 +2167,10 @@ function renderAchievements() {
     // Aplicar idioma guardado (traducción dinámica)
     if (typeof updateLanguageUI === 'function') {
       updateLanguageUI();
+    }
+    // Inicializar Ads + Premium
+    if (typeof initAds === 'function') {
+      initAds();
     }
   });
   

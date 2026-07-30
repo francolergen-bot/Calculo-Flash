@@ -1,11 +1,12 @@
-const CACHE_NAME = 'calculo-flash-v3';
+const CACHE_NAME = 'calculo-flash-v4';
 
 // Rutas RELATIVAS (funciona en GitHub Pages /Calculo-Flash/)
 const LOCAL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './firebase-config.js'
+  './firebase-config.js',
+  './ads-premium.js'
 ];
 
 // Instalación: cachea assets locales
