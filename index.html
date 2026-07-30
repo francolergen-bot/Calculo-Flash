@@ -1169,8 +1169,8 @@
     
     <!-- LEADERBOARD TABS -->
     <div class="leaderboard-tabs">
-      <button id="tab-global" class="tab-btn active" onclick="switchLeaderboardTab('global')">GLOBAL</button>
-      <button id="tab-aprendizaje" class="tab-btn" onclick="switchLeaderboardTab('aprendizaje')">APRENDIZAJE</button>
+      <button id="tab-local" class="tab-btn active" onclick="switchLeaderboardTab('local')">📱 MIS MARCAS</button>
+      <button id="tab-global" class="tab-btn" onclick="switchLeaderboardTab('global')">GLOBAL</button>
       <button id="tab-inicial" class="tab-btn" onclick="switchLeaderboardTab('inicial')">INICIAL</button>
       <button id="tab-intermedio" class="tab-btn" onclick="switchLeaderboardTab('intermedio')">INTERMEDIO</button>
       <button id="tab-experto" class="tab-btn" onclick="switchLeaderboardTab('experto')">EXPERTO</button>
@@ -1283,17 +1283,58 @@ const AudioEngine = (() => {
 // ================================================================
 // ACHIEVEMENTS DEFINITION
 // ================================================================
+// Helper: mejor nivel por dificultad (persistente)
+function getBestLevelByDiff(diff) {
+  const s = getStats();
+  return (s.bestLevelByDiff && s.bestLevelByDiff[diff]) || 0;
+}
+
+// Helper: días totales jugados (persistente)
+function getTotalDays() {
+  return parseInt(localStorage.getItem('cf_total_days_played')) || 0;
+}
+
 const ACHIEVEMENTS_DEF = [
-  { id: 'first_blood',   icon: '⚡', name: 'Primer paso',      desc: 'Completá tu primera ronda',       check: (s) => s.level >= 2 },
-  { id: 'level5',        icon: '🔥', name: 'En llamas',        desc: 'Alcanzá el nivel 5',              check: (s) => s.level >= 5 },
-  { id: 'level10',       icon: '💎', name: 'Diamante',         desc: 'Alcanzá el nivel 10',             check: (s) => s.level >= 10 },
-  { id: 'level20',       icon: '👑', name: 'Rey del flash',    desc: 'Alcanzá el nivel 20',             check: (s) => s.level >= 20 },
-  { id: 'level50',       icon: '🚀', name: 'Estratosférico',   desc: 'Alcanzá el nivel 50',             check: (s) => s.level >= 50 },
-  { id: 'streak5',       icon: '🎯', name: 'Racha x5',         desc: 'Lográ 5 correctas seguidas',      check: (s) => s.maxStreak >= 5 },
-  { id: 'streak10',      icon: '⚡', name: 'Racha x10',        desc: 'Lográ 10 correctas seguidas',     check: (s) => s.maxStreak >= 10 },
-  { id: 'streak25',      icon: '🌟', name: 'Imparable',        desc: '25 correctas seguidas',           check: (s) => s.maxStreak >= 25 },
-  { id: 'expert_5',      icon: '🧠', name: 'Mente experta',    desc: 'Llegá al nivel 5 en Experto',     check: (s) => s.difficulty === 'experto' && s.level >= 5 },
-  { id: 'score1000',     icon: '💯', name: 'Mil puntos',       desc: 'Superá los 1000 puntos',          check: (s) => s.score >= 1000 },
+  // ---- INICIAL (3) ----
+  { id: 'inicial_5',   icon: '🌱', cat: 'Inicial',     name: 'Principiante',    desc: 'Alcanzá el nivel 5 en Inicial',       check: (s) => (s.difficulty === 'inicial' && s.level >= 5) || getBestLevelByDiff('inicial') >= 5 },
+  { id: 'inicial_15',  icon: '⚔️', cat: 'Inicial',     name: 'Competidor',      desc: 'Alcanzá el nivel 15 en Inicial',      check: (s) => (s.difficulty === 'inicial' && s.level >= 15) || getBestLevelByDiff('inicial') >= 15 },
+  { id: 'inicial_30',  icon: '👑', cat: 'Inicial',     name: 'Campeón',         desc: 'Alcanzá el nivel 30 en Inicial',      check: (s) => (s.difficulty === 'inicial' && s.level >= 30) || getBestLevelByDiff('inicial') >= 30 },
+  // ---- INTERMEDIO (3) ----
+  { id: 'inter_5',     icon: '🔥', cat: 'Intermedio',  name: 'Desafiante',      desc: 'Alcanzá el nivel 5 en Intermedio',    check: (s) => (s.difficulty === 'intermedio' && s.level >= 5) || getBestLevelByDiff('intermedio') >= 5 },
+  { id: 'inter_20',    icon: '⚡', cat: 'Intermedio',  name: 'Velocista',       desc: 'Alcanzá el nivel 20 en Intermedio',   check: (s) => (s.difficulty === 'intermedio' && s.level >= 20) || getBestLevelByDiff('intermedio') >= 20 },
+  { id: 'inter_40',    icon: '🧠', cat: 'Intermedio',  name: 'Maestro Mental',  desc: 'Alcanzá el nivel 40 en Intermedio',   check: (s) => (s.difficulty === 'intermedio' && s.level >= 40) || getBestLevelByDiff('intermedio') >= 40 },
+  // ---- EXPERTO (3) ----
+  { id: 'exp_5',       icon: '💎', cat: 'Experto',     name: 'Mente Afilada',   desc: 'Alcanzá el nivel 5 en Experto',       check: (s) => (s.difficulty === 'experto' && s.level >= 5) || getBestLevelByDiff('experto') >= 5 },
+  { id: 'exp_20',      icon: '🎓', cat: 'Experto',     name: 'Genio',           desc: 'Alcanzá el nivel 20 en Experto',      check: (s) => (s.difficulty === 'experto' && s.level >= 20) || getBestLevelByDiff('experto') >= 20 },
+  { id: 'exp_50',      icon: '🚀', cat: 'Experto',     name: 'Estratosférico',  desc: 'Alcanzá el nivel 50 en Experto',      check: (s) => (s.difficulty === 'experto' && s.level >= 50) || getBestLevelByDiff('experto') >= 50 },
+  // ---- DEDICACIÓN: DÍAS ACUMULADOS (5) ----
+  { id: 'dias_7',      icon: '📅', cat: 'Dedicación',  name: 'Primera Semana',  desc: 'Jugá 7 días en total',                check: () => getTotalDays() >= 7 },
+  { id: 'dias_30',     icon: '📆', cat: 'Dedicación',  name: 'Aficionado',      desc: 'Jugá 30 días en total',               check: () => getTotalDays() >= 30 },
+  { id: 'dias_100',    icon: '🎖️', cat: 'Dedicación',  name: 'Veterano',        desc: 'Jugá 100 días en total',              check: () => getTotalDays() >= 100 },
+  { id: 'dias_365',    icon: '🏛️', cat: 'Dedicación',  name: 'Leyenda',         desc: 'Jugá 365 días en total',              check: () => getTotalDays() >= 365 },
+  { id: 'dias_1000',   icon: '♾️', cat: 'Dedicación',  name: 'Eterno',          desc: 'Jugá 1000 días en total',             check: () => getTotalDays() >= 1000 },
+  // ---- RACHA DIARIA SEGUIDA (4) ----
+  { id: 'racha_7',     icon: '🔥', cat: 'Racha',       name: 'Consistente',     desc: 'Racha de 7 días seguidos',            check: () => getDailyStreak() >= 7 },
+  { id: 'racha_30',    icon: '💪', cat: 'Racha',       name: 'Dedicado',        desc: 'Racha de 30 días seguidos',           check: () => getDailyStreak() >= 30 },
+  { id: 'racha_100',   icon: '🌋', cat: 'Racha',       name: 'Obsesionado',     desc: 'Racha de 100 días seguidos',          check: () => getDailyStreak() >= 100 },
+  { id: 'racha_365',   icon: '☄️', cat: 'Racha',       name: 'Inmortal',        desc: 'Racha de 365 días seguidos',          check: () => getDailyStreak() >= 365 },
+  // ---- PUNTUACIÓN (6) ----
+  { id: 'pts_1000',    icon: '💯', cat: 'Puntuación',  name: 'Primer Mil',      desc: 'Superá los 1.000 puntos',             check: (s) => s.score >= 1000 || getStats().bestScore >= 1000 },
+  { id: 'pts_5000',    icon: '⚡', cat: 'Puntuación',  name: 'Alto Voltaje',    desc: 'Superá los 5.000 puntos',             check: (s) => s.score >= 5000 || getStats().bestScore >= 5000 },
+  { id: 'pts_10000',   icon: '⭐', cat: 'Puntuación',  name: 'Superestrella',   desc: 'Superá los 10.000 puntos',            check: (s) => s.score >= 10000 || getStats().bestScore >= 10000 },
+  { id: 'pts_50000',   icon: '🏆', cat: 'Puntuación',  name: 'Legendario',      desc: 'Superá los 50.000 puntos',            check: (s) => s.score >= 50000 || getStats().bestScore >= 50000 },
+  { id: 'pts_100000',  icon: '👽', cat: 'Puntuación',  name: 'Sobrehumano',     desc: 'Superá los 100.000 puntos',           check: (s) => s.score >= 100000 || getStats().bestScore >= 100000 },
+  { id: 'pts_500000',  icon: '🌌', cat: 'Puntuación',  name: 'Infinito',        desc: 'Superá los 500.000 puntos',           check: (s) => s.score >= 500000 || getStats().bestScore >= 500000 },
+  // ---- PERFECCIÓN (4) ----
+  { id: 'perf_10',     icon: '🎯', cat: 'Perfección',  name: 'Precisión',       desc: '10 respuestas correctas seguidas',    check: (s) => s.maxStreak >= 10 },
+  { id: 'perf_50',     icon: '💎', cat: 'Perfección',  name: 'Perfeccionista',  desc: '50 respuestas correctas seguidas',    check: (s) => s.maxStreak >= 50 },
+  { id: 'perf_100',    icon: '🛡️', cat: 'Perfección',  name: 'Bulletproof',     desc: '100 respuestas correctas seguidas',   check: (s) => s.maxStreak >= 100 },
+  { id: 'perf_nv20',   icon: '✨', cat: 'Perfección',  name: 'Flawless',        desc: 'Llegá al nivel 20 sin perder vidas',  check: (s) => s.level >= 20 && s.lives === 3 },
+  // ---- GLOBALES (4) ----
+  { id: 'primer_paso', icon: '⚡', cat: 'Global',      name: 'Primer Paso',     desc: 'Completá tu primera partida',         check: (s) => s.level >= 2 },
+  { id: 'todo_terreno',icon: '🌍', cat: 'Global',      name: 'Todo Terreno',    desc: 'Jugá en las 4 dificultades',          check: () => { const b = getStats().bestLevelByDiff || {}; return ['aprendizaje','inicial','intermedio','experto'].every(d => (b[d]||0) >= 1); } },
+  { id: 'cien_partidas',icon: '🎮', cat: 'Global',     name: 'Jugador Serial',  desc: 'Jugá 100 partidas',                   check: () => getStats().gamesPlayed >= 100 },
+  { id: 'coleccionista',icon: '🎁', cat: 'Global',     name: 'Coleccionista',   desc: 'Desbloqueá todos los demás logros',   check: () => getUnlocked().length >= ACHIEVEMENTS_DEF.length - 1 },
 ];
 
 function getUnlocked() {
@@ -1811,6 +1852,15 @@ function saveAndHome() {
 // ================================================================
 // RENDER SCORES
 // ================================================================
+// Labels legibles para dificultades
+const DIFF_LABELS = {
+  aprendizaje: 'Aprend.',
+  inicial: 'Inicial',
+  intermedio: 'Interm.',
+  experto: 'Experto'
+};
+function diffLabel(d) { return DIFF_LABELS[d] || d; }
+
 function renderScores() {
   const scores = getScores();
   const list   = document.getElementById('scores-list');
@@ -1822,7 +1872,7 @@ function renderScores() {
     <div class="score-row">
       <span class="score-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1)}</span>
       <span class="score-name">${s.name}</span>
-      <span class="score-diff ${s.difficulty}">${s.difficulty}</span>
+      <span class="score-diff ${s.difficulty}">${diffLabel(s.difficulty)}</span>
       <span class="score-level">Nv ${s.level}</span>
       <span class="score-pts">${s.score} ${t('pts')}</span>
     </div>
@@ -1861,7 +1911,7 @@ async function switchLeaderboardTab(tab) {
     <div class="score-row">
       <span class="score-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1)}</span>
       <span class="score-name">${s.playerName}</span>
-      <span class="score-diff ${s.difficulty}">${s.difficulty}</span>
+      <span class="score-diff ${s.difficulty}">${diffLabel(s.difficulty)}</span>
       <span class="score-level">Nv ${s.level}</span>
       <span class="score-pts">${s.score} ${t('pts')}</span>
       <span style="font-size: 11px; color: var(--text-dim);">${s.country || '🌍'}</span>
@@ -1930,6 +1980,11 @@ function updateDailyStreak() {
   else { streak = 1; }
 
   localStorage.setItem('cf_daily', JSON.stringify({ lastDay: today, streak }));
+
+  // NUEVO: sumar día al acumulado total (solo 1 vez por día)
+  const totalDays = parseInt(localStorage.getItem('cf_total_days_played')) || 0;
+  localStorage.setItem('cf_total_days_played', totalDays + 1);
+
   return streak;
 }
 
@@ -1955,6 +2010,10 @@ function saveStats(state) {
   if (state.score > s.bestScore) s.bestScore = state.score;
   if (state.level > s.bestLevel) s.bestLevel = state.level;
   s.totalCorrect = (s.totalCorrect || 0) + (state.level - 1);
+  // NUEVO: mejor nivel por dificultad
+  if (!s.bestLevelByDiff) s.bestLevelByDiff = {};
+  const prevBest = s.bestLevelByDiff[state.difficulty] || 0;
+  if (state.level > prevBest) s.bestLevelByDiff[state.difficulty] = state.level;
   localStorage.setItem('cf_stats', JSON.stringify(s));
 }
 
@@ -2001,17 +2060,34 @@ function copyToClipboard(text) {
 function renderAchievements() {
   const unlocked = getUnlocked();
   const grid     = document.getElementById('achievements-grid');
-  grid.innerHTML = ACHIEVEMENTS_DEF.map(a => {
-    const isUnlocked = unlocked.includes(a.id);
-    return `
-      <div class="achievement-card ${isUnlocked ? 'unlocked' : 'locked'}">
-        ${!isUnlocked ? '<span class="ach-lock">🔒</span>' : ''}
-        <div class="ach-icon">${a.icon}</div>
-        <div class="ach-name">${a.name}</div>
-        <div class="ach-desc">${a.desc}</div>
-      </div>
-    `;
-  }).join('');
+
+  // Agrupar por categoría
+  const categories = [...new Set(ACHIEVEMENTS_DEF.map(a => a.cat))];
+
+  let html = `<div style="text-align:center; margin-bottom:16px; font-family:'Space Mono',monospace; font-size:14px; color:var(--text-dim);">
+    🏅 ${unlocked.filter(id => ACHIEVEMENTS_DEF.some(a => a.id === id)).length} / ${ACHIEVEMENTS_DEF.length} desbloqueados
+  </div>`;
+
+  for (const cat of categories) {
+    const achs = ACHIEVEMENTS_DEF.filter(a => a.cat === cat);
+    const catUnlocked = achs.filter(a => unlocked.includes(a.id)).length;
+    html += `<div style="font-family:'Space Mono',monospace; font-size:13px; color:var(--accent); margin:20px 0 10px; text-transform:uppercase; letter-spacing:1px;">
+      ${cat} · ${catUnlocked}/${achs.length}
+    </div>`;
+    html += achs.map(a => {
+      const isUnlocked = unlocked.includes(a.id);
+      return `
+        <div class="achievement-card ${isUnlocked ? 'unlocked' : 'locked'}">
+          ${!isUnlocked ? '<span class="ach-lock">🔒</span>' : ''}
+          <div class="ach-icon">${a.icon}</div>
+          <div class="ach-name">${a.name}</div>
+          <div class="ach-desc">${a.desc}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  grid.innerHTML = html;
 }
 </script>
 <script>
@@ -2027,6 +2103,10 @@ function renderAchievements() {
   window.addEventListener('load', () => {
     if (typeof initFirebase === 'function') {
       initFirebase();
+    }
+    // Aplicar idioma guardado (traducción dinámica)
+    if (typeof updateLanguageUI === 'function') {
+      updateLanguageUI();
     }
   });
   
